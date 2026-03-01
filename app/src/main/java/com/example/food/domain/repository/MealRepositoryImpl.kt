@@ -15,6 +15,10 @@ class MealRepositoryImpl(
     private val dao: MealDao
 ) : MealRepository {
 
+    // ==========================================
+    // OBSERVATEURS (Lecture Locale -> UI)
+    // ==========================================
+
     override fun getCategoriesFlow(): Flow<List<Category>> {
         return dao.getCategories().map { entities ->
             entities.map { it.toDomain() }
@@ -39,6 +43,10 @@ class MealRepositoryImpl(
         }
     }
 
+    // ==========================================
+    // ACTIONS RÉSEAU (API -> Écriture Locale)
+    // ==========================================
+
     override suspend fun refreshCategories() {
         val response = api.getCategories()
         val entities = response.categories.map { it.toEntity() }
@@ -48,7 +56,11 @@ class MealRepositoryImpl(
     override suspend fun refreshMealsByCategory(category: String) {
         val response = api.getMealsByCategory(category)
         val dtos = response.meals ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+
+        val entities = dtos.map { dto ->
+            dto.toEntity().copy(strCategory = category)
+        }
+
         dao.insertMeals(entities)
     }
 
