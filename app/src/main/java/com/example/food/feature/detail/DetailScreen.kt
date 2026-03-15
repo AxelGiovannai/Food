@@ -101,7 +101,6 @@ fun DetailScreen(
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
                                     .data(meal.thumb)
-                                    // Avoid decoding very large source images at full resolution.
                                     .size(width = 1200, height = 800)
                                     .crossfade(true)
                                     .build(),

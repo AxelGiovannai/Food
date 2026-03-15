@@ -2,13 +2,17 @@ package com.example.food
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.food.core.navigation.AppNavigation
+import com.example.food.core.ui.theme.OrangePrimary
 import com.example.food.core.ui.theme.FoodTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -16,6 +20,9 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(OrangePrimary.toArgb())
+        )
         super.onCreate(savedInstanceState)
 
         setContent {
