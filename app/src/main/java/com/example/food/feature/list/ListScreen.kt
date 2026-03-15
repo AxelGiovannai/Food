@@ -1,5 +1,6 @@
 package com.example.food.feature.list
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,12 +12,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.example.food.domain.model.Category
 import com.example.food.domain.model.Meal
 import kotlinx.coroutines.flow.collectLatest
 
@@ -27,6 +34,8 @@ fun ListScreen(
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val fontScale = LocalDensity.current.fontScale
+    val gridColumns = if (fontScale >= 1.3f) 1 else 2
 
     LaunchedEffect(viewModel.labels) {
         viewModel.labels.collectLatest { label ->
@@ -37,9 +46,14 @@ fun ListScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Recettes") }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                title = { Text("Recettes", fontWeight = FontWeight.SemiBold) }
             )
         }
     ) { paddingValues ->
@@ -51,10 +65,18 @@ fun ListScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = { viewModel.onIntent(ListStore.Intent.Search(it)) },
+                label = { Text("Recherche") },
                 placeholder = { Text("Chercher une recette...") },
+                shape = MaterialTheme.shapes.large,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 singleLine = true
             )
 
@@ -68,6 +90,16 @@ fun ListScreen(
                         FilterChip(
                             selected = state.selectedCategory == category.name,
                             onClick = { viewModel.onIntent(ListStore.Intent.SelectCategory(category.name)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.secondary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onSecondary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = state.selectedCategory == category.name,
+                                borderColor = MaterialTheme.colorScheme.outline,
+                                selectedBorderColor = MaterialTheme.colorScheme.secondary
+                            ),
                             label = { Text(category.name) }
                         )
                     }
@@ -83,17 +115,17 @@ fun ListScreen(
                     Text(text = state.error ?: "Erreur inconnue", color = MaterialTheme.colorScheme.error)
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = { viewModel.onIntent(ListStore.Intent.Retry) }) {
-                        Text("Réessayer")
+                        Text("Reessayer")
                     }
                 }
             }
 
             Box(modifier = Modifier.weight(1f)) {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                    columns = GridCells.Fixed(gridColumns),
                     contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(state.meals) { meal ->
@@ -105,7 +137,10 @@ fun ListScreen(
 
                 if (state.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .semantics { contentDescription = "Chargement des recettes" }
                     )
                 }
             }
@@ -118,8 +153,15 @@ fun MealCard(meal: Meal, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics {
+                role = Role.Button
+                contentDescription = "Ouvrir la recette ${meal.name}"
+            }
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column {
             AsyncImage(
@@ -129,10 +171,13 @@ fun MealCard(meal: Meal, onClick: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
+                    .clip(MaterialTheme.shapes.large)
             )
             Text(
                 text = meal.name,
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(12.dp)

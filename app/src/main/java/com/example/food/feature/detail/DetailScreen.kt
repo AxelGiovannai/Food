@@ -1,5 +1,6 @@
 package com.example.food.feature.detail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,9 +37,15 @@ fun DetailScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(state.meal?.name ?: "Détails") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                title = { Text(state.meal?.name ?: "Details", maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.onIntent(DetailStore.Intent.ClickBack) }) {
                         Icon(
@@ -53,9 +63,13 @@ fun DetailScreen(
                 .padding(paddingValues)
         ) {
             if (state.isLoading && state.meal == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            else if (state.error != null && state.meal == null) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .semantics { contentDescription = "Chargement des details" }
+                )
+            } else if (state.error != null && state.meal == null) {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -63,56 +77,104 @@ fun DetailScreen(
                     Text(text = state.error ?: "Erreur", color = MaterialTheme.colorScheme.error)
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = { viewModel.onIntent(DetailStore.Intent.Retry) }) {
-                        Text("Réessayer")
+                        Text("Reessayer")
                     }
                 }
-            }
-            else if (state.meal != null) {
+            } else if (state.meal != null) {
                 val meal = state.meal!!
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     item {
-                        AsyncImage(
-                            model = meal.thumb,
-                            contentDescription = meal.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(16f / 9f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f))
+                        ) {
+                            AsyncImage(
+                                model = meal.thumb,
+                                contentDescription = meal.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(16f / 9f)
+                            )
+                        }
                     }
 
                     item {
                         Text(
-                            text = "Ingrédients",
+                            text = "Ingredients",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.semantics { heading() }
                         )
                     }
 
                     items(meal.ingredients) { ingredient ->
-                        ListItem(
-                            headlineContent = { Text(ingredient.name) },
-                            trailingContent = { Text(ingredient.measure, fontWeight = FontWeight.SemiBold) }
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription = "${ingredient.name}, ${ingredient.measure}"
+                                    }
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = ingredient.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = ingredient.measure,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                thickness = 0.75.dp
+                            )
+                        }
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Instructions",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.semantics { heading() }
                         )
-                        Text(
-                            text = meal.instructions,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
+                    item {
+                        Card(
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = meal.instructions,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
                     }
                 }
             }
