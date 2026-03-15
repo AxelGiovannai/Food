@@ -39,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -60,6 +61,7 @@ dependencies {
     implementation(libs.mvikotlin)
     implementation(libs.mvikotlin.main)
     implementation(libs.mvikotlin.coroutines)
+    debugImplementation(libs.mvikotlin.logging)
 
     // --- Coroutines ---
     implementation(libs.kotlinx.coroutines.core)
@@ -77,6 +79,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.serialization.json)
+    debugImplementation(libs.okhttp.logging)
+
 
     // --- Base de données locale ---
     implementation(libs.room.runtime)
@@ -91,4 +95,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }

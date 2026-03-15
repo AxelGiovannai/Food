@@ -2,6 +2,8 @@ package com.example.food.core.di
 
 import android.content.Context
 import androidx.room.Room
+import com.arkivanov.mvikotlin.core.store.StoreFactory
+import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.food.data.local.MealDatabase
 import com.example.food.data.local.dao.MealDao
 import com.example.food.data.remote.MealApi
@@ -17,19 +19,47 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 import javax.inject.Singleton
+import com.arkivanov.mvikotlin.logging.store.LoggingStoreFactory
+import com.example.food.BuildConfig
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import java.util.concurrent.TimeUnit
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    @Provides
+    @Singleton
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+    }
 
     @Provides
     @Singleton
-    fun provideMealApi(): MealApi {
+    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMealApi(okHttpClient: OkHttpClient): MealApi {
         val networkJson = Json { ignoreUnknownKeys = true }
 
         return Retrofit.Builder()
             .baseUrl(MealApi.BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(MealApi::class.java)
@@ -62,8 +92,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideStoreFactory(): com.arkivanov.mvikotlin.core.store.StoreFactory {
-        return com.arkivanov.mvikotlin.main.store.DefaultStoreFactory()
+    fun provideStoreFactory(): StoreFactory {
+        return if (BuildConfig.DEBUG) {
+            LoggingStoreFactory(DefaultStoreFactory())
+        } else {
+            DefaultStoreFactory()
+        }
     }
 
 }
