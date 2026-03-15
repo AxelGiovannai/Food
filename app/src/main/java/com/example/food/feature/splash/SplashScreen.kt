@@ -1,6 +1,5 @@
 package com.example.food.feature.splash
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,16 +15,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.food.core.ui.theme.OrangePrimary
 import com.example.food.R
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
     onSplashFinished: () -> Unit
 ) {
+    val context = LocalContext.current
     val hasNavigated = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -47,9 +50,15 @@ fun SplashScreen(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_food),
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(R.drawable.logo_food)
+                    // Decode splash logo at target display size, not source dimensions.
+                    .size(width = 512, height = 512)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Food Logo",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.size(250.dp)
             )
         }

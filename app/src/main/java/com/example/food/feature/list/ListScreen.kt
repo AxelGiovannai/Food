@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -22,8 +23,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.food.domain.model.Meal
 import kotlinx.coroutines.flow.collectLatest
 
@@ -150,6 +152,8 @@ fun ListScreen(
 
 @Composable
 fun MealCard(meal: Meal, onClick: () -> Unit) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,7 +169,11 @@ fun MealCard(meal: Meal, onClick: () -> Unit) {
     ) {
         Column {
             AsyncImage(
-                model = meal.thumb,
+                model = ImageRequest.Builder(context)
+                    .data(meal.thumb)
+                    .size(width = 800, height = 800)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = meal.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

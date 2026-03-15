@@ -11,13 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,13 +96,20 @@ fun DetailScreen(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f))
                         ) {
+                            val context = LocalContext.current
+
                             AsyncImage(
-                                model = meal.thumb,
-                                contentDescription = meal.name,
-                                contentScale = ContentScale.Crop,
+                                model = ImageRequest.Builder(context)
+                                    .data(meal.thumb)
+                                    // Avoid decoding very large source images at full resolution.
+                                    .size(width = 1200, height = 800)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .aspectRatio(16f / 9f)
+                                    .height(220.dp),
+                                contentScale = ContentScale.Crop
                             )
                         }
                     }
